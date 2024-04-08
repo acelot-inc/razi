@@ -22,24 +22,22 @@ class Mol(UserDefinedType):
             # convert the Molecule instance to the value used by the
             # db driver
             if isinstance(value, Chem.Mol):
-                value = memoryview(value.ToBinary())
-            elif isinstance(value, str):
-                value = memoryview(Chem.MolFromSmiles(value).ToBinary())
+                value = Chem.MolToSmiles(value)
             return value
         return process
 
     def bind_expression(self, bindvalue):
-        return func.mol_from_pkl(bindvalue)
+        return func.mol_from_smiles(bindvalue)
 
     def column_expression(self, col):
-        return func.mol_to_pkl(col, type_=self)
+        return func.mol_to_smiles(col, type_=self)
 
     def result_processor(self, dialect, coltype):
         def process(value):
             if value is None:
                 return value
-            elif isinstance(value, memoryview):
-                return Chem.Mol(bytes(value))
+            elif isinstance(value, str):
+                return Chem.MolFromSmiles(value)
             else:
                 raise RuntimeError(
                     "Unexpected row value type for a Mol instance")
